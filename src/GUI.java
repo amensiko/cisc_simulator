@@ -12,7 +12,6 @@ public class GUI {
     private JTextField r3_textField;
     private JTextField r1_textField;
     private JTextField r2_textField;
-    private JTextField ix_textField;
     private JTextField x1_textField;
     private JTextField x3_textField;
     private JTextField pc_textField;
@@ -20,7 +19,6 @@ public class GUI {
     private JTextField opcode_textField;
     private JTextField address_textField;
     private JTextField mfr_textField;
-    private JTextField msr_textField;
     private JTextField mbr_textField;
     private JTextField mar_textField;
     private JTextField ir_textField;
@@ -28,12 +26,10 @@ public class GUI {
     private JButton haltButton;
     private JButton singleStepButton;
     private JButton startButton;
-    private JTextField i_textField;
     private JTextArea resultsTextArea;
     private JLabel x3_label;
     private JLabel r2_label;
     private JLabel r3_label;
-    private JLabel ix_label;
     private JLabel x1_label;
     private JLabel x2_label;
     private JLabel cc_label;
@@ -43,12 +39,36 @@ public class GUI {
     private JLabel ir_label;
     private JLabel mar_label;
     private JLabel mbr_label;
-    private JLabel msr_label;
     private JLabel mfr_label;
+    private JTextField irr_textField;
+    private JTextField iar_textField;
+    private JLabel irr_label;
+    private JLabel iar_label;
+    private JTextField ix_textField;
+    private JTextField i_textField;
+    private JLabel ix_label;
     private JLabel i_label;
 
     public GUI() {
         buttonStart.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        r0_textField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        r1_textField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+        clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
 
