@@ -354,7 +354,7 @@ public class GUI {
 
 
     public void ldaInstr(int gpr, int eff_a) {
-        String eabinary=Integer.toBinaryString(eff_a);
+        resultsTextArea.append("From memory " + Integer.toBinaryString(eff_a));
         if (gpr == 00) {
             r[0] = eff_a;
         }
@@ -370,8 +370,82 @@ public class GUI {
     }
 
 
-    public void ldxInstr(int ix,int ea,int ival) {
-        //TODO
+    public void ldxInstr(int ix, int eff_a, int i) {
+        resultsTextArea.append("From memory " + Integer.toBinaryString(eff_a));
+        int eff_addr = eff_a/6;
+        int memoryInd = eff_a%6;
+        String eaBinary = Integer.toBinaryString(eff_addr);
+        while (eaBinary.length() < 16) {
+            eaBinary = "0" + eaBinary;
+        }
+        int cacheInd = Integer.parseInt(eaBinary.substring(13,16),2);
+        int tag = Integer.parseInt(eaBinary.substring(0,13),2);
+        int[] w = (int[])(((cacheSim.line).get(cacheInd)).get("w"));
+        resultsTextArea.append("In cache "+ cacheInd);
+        if (((cacheSim.line).get(cacheInd)).get("tag").equals(tag)) {
+            resultsTextArea.append("In cache "+ cacheInd);
+            ((cacheSim.line).get(cacheInd)).put("inline", 1);
+
+            if (i == 0) {
+                if (ix==01) {
+                    ix_vals[0] = w[memoryInd];
+                }
+                if (ix==10) {
+                    ix_vals[1] = w[memoryInd];
+                }
+                if (ix==11) {
+                    ix_vals[2] = w[memoryInd];
+                }
+            }
+        } if (!(((cacheSim.line).get(cacheInd)).get("tag")).equals(tag)) {
+            if (((cacheSim.line).get(cacheInd)).get("written").equals(1)) {
+                int start = ((int)(((cacheSim.line).get(cacheInd)).get("tag")) * 8 + cacheInd) * 6;
+                for (int c = 0; c < 6; c++) {
+                    int[] w1 = (int[]) (((cacheSim.line).get(cacheInd)).get("w"));
+                    memory[start + c] = w1[c];
+                }
+                int cp = (tag * 8 + cacheInd) * 6;
+                for (int c = 0; c < 6; c++) {
+                    int[] w2 = (int[])(((cacheSim.line).get(cacheInd)).get("w"));
+                    w2[c] = memory[cp+c];
+                }
+                ((cacheSim.line).get(cacheInd)).put("tag", tag);
+                ((cacheSim.line).get(cacheInd)).put("inline", 1);
+                ((cacheSim.line).get(cacheInd)).put("written", 0);
+                if (i == 0) {
+                    if (ix == 01) {
+                        ix_vals[0] = w[memoryInd];
+                    }
+                    if (ix == 10) {
+                        ix_vals[1] = w[memoryInd];
+                    }
+                    if (ix == 11) {
+                        ix_vals[2] = w[memoryInd];
+                    }
+                }
+            }  else if (((cacheSim.line).get(cacheInd)).get("written").equals(0)) {
+                int cp = (tag * 8 + cacheInd) * 6;
+                for (int c = 0; c < 6; c++) {
+                    int[] w2 = (int[])(((cacheSim.line).get(cacheInd)).get("w"));
+                    w2[c] = memory[cp+c];
+                }
+                ((cacheSim.line).get(cacheInd)).put("tag", tag);
+                ((cacheSim.line).get(cacheInd)).put("inline", 1);
+                ((cacheSim.line).get(cacheInd)).put("written", 0);
+                if (i == 0) {
+                    if (ix == 01) {
+                        ix_vals[0] = w[memoryInd];
+                    }
+                    if (ix == 10) {
+                        ix_vals[1] = w[memoryInd];
+                    }
+                    if (ix == 11) {
+                        ix_vals[2] = w[memoryInd];
+                    }
+                }
+            }
+
+        }
     }
 
 
