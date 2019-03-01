@@ -1,8 +1,9 @@
+import javax.naming.InitialContext;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
 import java.text.DecimalFormat;
+import java.io.*;
 
 
 public class simulator {
@@ -42,12 +43,71 @@ public class simulator {
     private JButton enter_memory;
     private JButton enter_pc;
 
-    private JScrollPane scrollPane;
-
     public static String[] memory = new String[2048];
-    public static int[] r = new int[4];
-    public static CacheSim cacheSim = new CacheSim();
+    public static CacheSim cacheSim= new CacheSim();
 
+    /**
+     * Return 16 bits binary string which value is a
+     * @param a
+     */
+   public String toBinary_lenth16(int a){
+       DecimalFormat g1=new DecimalFormat("0000000000000000");
+
+       if(a>=0){
+           String binary_a=Integer.toBinaryString(a);
+           return g1.format(Long.valueOf(binary_a));
+       }
+       else{
+           int minus_a =-a;
+           String binary__minus_a=Integer.toBinaryString(minus_a);
+           String str=g1.format(Long.valueOf(binary__minus_a));
+           StringBuilder strBuilder = new StringBuilder(str);
+           for(int i=0;i<=15;i++) {
+               if(str.charAt(i)=='0') {
+                   strBuilder.setCharAt(i, '1');
+               }
+               else{
+                   strBuilder.setCharAt(i, '0');
+               }
+           }
+           String complement=strBuilder.toString();
+           int value_conmplement=Integer.parseInt(complement,2);
+           return Integer.toBinaryString(value_conmplement+1);
+       }
+   }
+    /**
+     * Return a's value, no matter a is negative or positive
+     * @param a
+     */
+   public int parseInt_for_all(String a){
+       if (a.equals("")) {
+           return 0;
+       }
+       if(a.length()!=16){
+           DecimalFormat g1=new DecimalFormat("0000000000000000");
+           a=g1.format(Long.valueOf(a));
+       }
+       //must 16 bits
+       if(a.charAt(0)=='0'){
+           return Integer.parseInt(a,2);
+       }
+       else{
+           int temp=Integer.parseInt(a,2);
+
+           a=Integer.toBinaryString(temp-1);
+
+           StringBuilder strBuilder1 = new StringBuilder(a);
+           for(int i=0;i<=15;i++) {
+               if(a.charAt(i)=='0') {
+                   strBuilder1.setCharAt(i, '1');
+               }
+               else{
+                   strBuilder1.setCharAt(i, '0');
+               }
+           }
+           return -(Integer.parseInt(strBuilder1.toString(),2));
+       }
+   }
     /**
      * check if S is binary string
      * @param s
@@ -59,6 +119,52 @@ public class simulator {
             return false;
     }
     /**
+     * String=String+1
+     */
+    public String binary_plus_one(String a){
+        if (a.equals("")) {
+            return "0000000000000001";
+        }
+        else {
+            int decimal_data = parseInt_for_all(a);
+            decimal_data = decimal_data + 1;
+
+            return toBinary_lenth16(decimal_data);
+        }
+    }
+    /**
+     * String=String-1
+     */
+    public String binary_minus_one(String binary_string){
+        if (binary_string.equals("")) {
+            return "1111111111111111";
+        }
+        int decimal_data=parseInt_for_all(binary_string);
+        decimal_data=decimal_data-1;
+        return toBinary_lenth16(decimal_data);
+    }
+    /**
+     * return a+b
+     */
+    public String binary_add(String a, String b) {
+        int int_a=parseInt_for_all(a);
+        int int_b=parseInt_for_all(b);
+        int c=int_a+int_b;
+        return toBinary_lenth16(c);
+
+    }
+    /**
+     * return a+b
+     */
+    public String binary_minus(String a, String b){
+        int int_a=parseInt_for_all(a);
+        int int_b=parseInt_for_all(b);
+
+        int c=int_a-int_b;
+        return toBinary_lenth16(c);
+    }
+
+    /**
      * Decode instruction,calculate Effective address,execution
      * @param instruction
      */
@@ -67,32 +173,81 @@ public class simulator {
             machinefault_illegal_instruction();
         }
         else {
-            int opcode = Integer.parseInt(instruction.substring(0, 6), 2);
-            int ix = Integer.parseInt(instruction.substring(8, 10), 2);
-            int r = Integer.parseInt(instruction.substring(6, 8), 2);
-            int i = Integer.parseInt(instruction.substring(10, 11), 2);
-            int addr = Integer.parseInt(instruction.substring(11, 16), 2);
+            String opcode=Integer.toOctalString( Integer.parseInt(instruction.substring(0, 6), 2));
+           // resultsTextArea.append(opcode);
+            switch(opcode){
+                case"1":
+                    ldrInstr(instruction);
+                    break;
+                case"2":
+                    strInstr(instruction);
+                    break;
+                case"3":
+                    ldaInstr(instruction);
+                    break;
+                case"4":
+                    amrInstr(instruction);
+                    break;
+                case"5":
+                    smrInstr(instruction);
+                    break;
+                case"6":
+                    airInstr(instruction);
+                    break;
+                case"7":
+                    sirInstr(instruction);
+                    break;
+                case"41":
+                    ldxInstr(instruction);
+                    break;
+                case"42":
+                    stxInstr(instruction);
+                    break;
+                case "10":
+                    jzInstr(instruction);
+                    break;
+                case "11":
+                    jneInstr(instruction);
+                    break;
+                case "12":
+                    jccInstr(instruction);
+                    break;
+                case "13":
+                    jmaInstr(instruction);
+                    break;
+                case "14":
+                    jsrInstr(instruction);
+                    break;
+                case "15":
+                    rfsInstr(instruction);
+                    break;
+                case "16":
+                    sobInstr(instruction);
+                    break;
+                case "17":
+                    jgeInstr(instruction);
+                    break;
+                case "20":
+                    mlt(instruction);
+                    break;
+                case "21":
+                    dvd(instruction);
+                    break;
+                case "22":
+                    trr(instruction);
+                    break;
+                case "23":
+                    and(instruction);
+                    break;
+                case "24":
+                    orr(instruction);
+                    break;
+                case "25":
+                    not(instruction);
+                    break;
 
-
-
-
-            calculateEA(i, ix, addr, opcode);
-
-            if (opcode == 1) {
-                ldrInstr(r);
-            } else if (opcode == 2) {
-                strInstr(r);
-            } else if (opcode == 3) {
-                ldaInstr(r);
-            } else if (opcode == 41) {
-
-                ldxInstr(ix);
-
-
-            } else if (opcode == 42) {
-                stxInstr(ix);
-            } else {
-                machinefault_opcode();//invalid opcode
+                default:
+                    machinefault_opcode();//invalid opcode
             }
         }
 
@@ -100,21 +255,24 @@ public class simulator {
 
     /**
      * calculate Effective address and store eff_addr to IAR
-     * @param i
-     * @param ix
-     * @param addr
-     * @param opcode
+     * @param instruction
+     *
      * @return eff_addr
      */
-    public int calculateEA(int i,int ix, int addr,int opcode){
+    public int calculateEA(String instruction){
+        String opcode=Integer.toOctalString( Integer.parseInt(instruction.substring(0, 6), 2));
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        int i = Integer.parseInt(instruction.substring(10, 11), 2);
+        int addr = Integer.parseInt(instruction.substring(11, 16), 2);
         int eff_addr = 0;
-        if(opcode==41||opcode==42){
+        if(opcode.equals("41")||opcode.equals("42")){
                 if (i == 1) {
                     if(memory[addr]==""){
                         machinefault_empty();
                     }
                     else {
-                        eff_addr = Integer.parseInt(memory[addr], 2);//
+
+                        eff_addr = Integer.parseInt(cacheSim.access_memory(addr,memory), 2);//
                     }
                 }
                 else if (i == 0) {
@@ -128,7 +286,7 @@ public class simulator {
                         machinefault_empty();
                     }
                     else {
-                        eff_addr = Integer.parseInt(memory[addr], 2);//
+                        eff_addr = Integer.parseInt(cacheSim.access_memory(addr,memory), 2);//
                     }
                 }
                 if (ix == 1) {
@@ -144,7 +302,7 @@ public class simulator {
                             machinefault_empty();
                         }
                         else {
-                            eff_addr = Integer.parseInt(memory[addr], 2);
+                            eff_addr = Integer.parseInt(cacheSim.access_memory(addr,memory), 2);
                         }
                     }
                 }
@@ -160,7 +318,7 @@ public class simulator {
                         } else if(memory[addr]==""){
                             machinefault_empty();
                         } else {
-                            eff_addr = Integer.parseInt(memory[addr], 2);
+                            eff_addr = Integer.parseInt(cacheSim.access_memory(addr,memory), 2);
                         }
                     }
                 }
@@ -176,7 +334,7 @@ public class simulator {
                         } else if(memory[addr]==""){
                             machinefault_empty();
                         }else {
-                            eff_addr = Integer.parseInt(memory[addr], 2);
+                            eff_addr = Integer.parseInt(cacheSim.access_memory(addr,memory), 2);
                         }
                     }
                 }
@@ -225,7 +383,7 @@ public class simulator {
     }
 
     /**
-     * fetch data by address from CPU
+     * fetch data by address from memory
      * @param address
      * @return memory[decimal_address]
      */
@@ -239,9 +397,9 @@ public class simulator {
             machinefault_reserved_locations();
             return "0";
         }else {
-            mem_textField.setText(memory[decimal_address]);
-            mbr_textField.setText(memory[decimal_address]);
-            return memory[decimal_address];
+            mem_textField.setText(cacheSim.access_memory(decimal_address,memory));
+            mbr_textField.setText(cacheSim.access_memory(decimal_address,memory));
+            return cacheSim.access_memory(decimal_address,memory);
         }
 
     }
@@ -281,6 +439,10 @@ public class simulator {
             }
         }
     }
+
+    /**
+     * ===========================================================================================================================================================================
+     */
     public simulator() {
         /**
          * build button so that radiobutton can be selected only one at the same time
@@ -290,35 +452,37 @@ public class simulator {
             group.add(this.r1RadioButton);
             group.add(this.r2RadioButton);
             group.add(this.r3RadioButton);
-
         /**
          * clear all the register
          */
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                r0_textField.setText("");
-                r1_textField.setText("");
-                r2_textField.setText("");
-                r3_textField.setText("");
-                x1_textField.setText("");
-                x2_textField.setText("");
-                x3_textField.setText("");
-                pc_textField.setText("");
-                ir_textField.setText("");
-                mar_textField.setText("");
-                mbr_textField.setText("");
-                mfr_textField.setText("");
-                irr_textField.setText("");
-                iar_textField.setText("");
-                data1_textField.setText("");
-                data2_textField.setText("");
-                data3_textField.setText("");
-                address_textField.setText("");
-                cc_textField.setText("");
+                r0_textField.setText("0000000000000000");
+                r1_textField.setText("0000000000000000");
+                r2_textField.setText("0000000000000000");
+                r3_textField.setText("0000000000000000");
+                x1_textField.setText("0000000000000000");
+                x2_textField.setText("0000000000000000");
+                x3_textField.setText("0000000000000000");
+                pc_textField.setText("0000000000000000");
+                ir_textField.setText("0000000000000000");
+                mar_textField.setText("0000000000000000");
+                mbr_textField.setText("0000000000000000");
+                mfr_textField.setText("0000000000000000");
+                irr_textField.setText("0000000000000000");
+                iar_textField.setText("0000000000000000");
+                data1_textField.setText("0000000000000000");
+                data2_textField.setText("0000000000000000");
+                data3_textField.setText("0000000000000000");
+                address_textField.setText("0000000000000000");
+                cc_textField.setText("0000000000000000");
 
             }
         });
+        /**
+         * ====================================================LISTENER================================================================================================
+         */
         /**
          * the listener of the button of entering data to register
          */
@@ -413,7 +577,6 @@ public class simulator {
             @Override
             public void actionPerformed(ActionEvent e) {
                 mar_textField.setText(pc_textField.getText());
-
                 String instruction=memory[Integer.parseInt(mar_textField.getText(),2)];
                 mem_textField.setText(instruction);
                 mbr_textField.setText(instruction);
@@ -450,7 +613,7 @@ public class simulator {
             public void actionPerformed(ActionEvent e) {
                 int i=8;
                 while(i<14){
-                    String instruction=memory[i];
+                    String instruction=cacheSim.access_memory(i,memory);
                     pc_textField.setText(Integer.toBinaryString(i));
                     mem_textField.setText(instruction);
                     mbr_textField.setText(instruction);
@@ -459,14 +622,44 @@ public class simulator {
                 }
             }
         });
+        haltButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               for(int i=0;i<2048;i++){
+                   memory[i]=toBinary_lenth16(i);
+               }
+               r2_textField.setText("0000001000001111");
+               not("0100001010000000");
+
+            }
+        });
     }
-   public void ldrInstr(int r){
+    /**
+     * ===========================================================================================================================================================================
+     */
+
+    /**
+     * ===========================================================================INSTRUCTION============================================================================================
+     */
+    public void hltInstr(){
+
+    }
+    public void trapInstr(String instruction){
+        String trap_code=instruction.substring(12,16);
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+        cacheSim.write_to_memory(PC_plus_one,2,memory);
+    }
+   public void ldrInstr(String instruction){
+       int r = Integer.parseInt(instruction.substring(6, 8), 2);
+       calculateEA(instruction);
+
         irr_textField.setText(fetch(iar_textField.getText()));
         String data=irr_textField.getText();
         int decimal_address=Integer.parseInt(iar_textField.getText(),2);
         if(r==0){
             r0_textField.setText(data);
             resultsTextArea.append("Load R0 from memory["+decimal_address+"]"+"\r\n");
+
         }else if(r==1){
             r1_textField.setText(data);
             resultsTextArea.append("Load R1 from memory["+decimal_address+"]"+"\r\n");
@@ -479,8 +672,11 @@ public class simulator {
         }
 
    }
-   public void strInstr(int r){
+   public void strInstr(String instruction){
+       int r = Integer.parseInt(instruction.substring(6, 8), 2);
+       calculateEA(instruction);
         int mem_address=Integer.parseInt(iar_textField.getText(),2);
+
         if(r==0){
        memory[mem_address]=r0_textField.getText();
             resultsTextArea.append("Store R0 to memory["+mem_address+"]"+"\r\n");
@@ -497,7 +693,9 @@ public class simulator {
 
 }
 
-public void ldaInstr(int r){
+public void ldaInstr(String instruction){
+    int r = Integer.parseInt(instruction.substring(6, 8), 2);
+    calculateEA(instruction);
         String address=iar_textField.getText();
     if(r==0){
         r0_textField.setText(address);
@@ -515,7 +713,9 @@ public void ldaInstr(int r){
     }
     }
 
-    public void ldxInstr(int ix){
+    public void ldxInstr(String instruction){
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        calculateEA(instruction);
         irr_textField.setText(fetch(iar_textField.getText()));
         String data=irr_textField.getText();
         int decimal_data=Integer.parseInt(data,2);
@@ -534,7 +734,9 @@ public void ldaInstr(int r){
         }
 
     }
-    public void stxInstr(int ix){
+    public void stxInstr(String instruction){
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        calculateEA(instruction);
         int mem_address=Integer.parseInt(iar_textField.getText(),2);
         if(ix==0){
             //machine fault  ix不应该是0
@@ -550,6 +752,710 @@ public void ldaInstr(int r){
         }
 
     }
+
+    /**
+     * Jump if zero
+     *
+     */
+    public void jzInstr(String instruction){
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+
+        if(r==0){
+            if(parseInt_for_all(r0_textField.getText())==0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JZ:  PC<-EA" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JZ: PC <- PC+1" +"\r\n");
+            }
+
+        }else if(r==1){
+            if(parseInt_for_all(r1_textField.getText())==0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JZ:  PC<-EA" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JZ:  PC <- PC+1C" +"\r\n");
+            }
+        }else if(r==2){
+            if(parseInt_for_all(r2_textField.getText())==0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JZ:  PC<-EA" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JZ:  PC <- PC+1" +"\r\n");
+            }
+        }else if(r==3){
+            if(parseInt_for_all(r3_textField.getText())==0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JZ:  PC<-EA" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JZ:  PC <- PC+1" +"\r\n");
+            }
+        }
+    }
+    /**
+     * Jump if not equal
+     *
+     */
+    public void jneInstr(String instruction){
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+
+        if(r==0){
+            if(r0_textField.getText()!="0"){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JNE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JNE:  Store PC +1 to PC" +"\r\n");
+            }
+
+        }else if(r==1){
+            if(r1_textField.getText()!="0"){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JNE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JNE:  Store PC +1 to PC" +"\r\n");
+            }
+        }else if(r==2){
+            if(r2_textField.getText()!="0"){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JNE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JNE:  Store PC +1 to PC" +"\r\n");
+            }
+        }else if(r==3){
+            if(r3_textField.getText()!="0"){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JNE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JNE:  Store PC +1 to PC" +"\r\n");
+            }
+        }
+    }
+    /**
+     * Jump if CC
+     *
+     */
+    public void jccInstr(String instruction){
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+        if(cc_textField.getText()=="1"){
+            pc_textField.setText(EA);
+            resultsTextArea.append("JCC:  Store EA to PC" +"\r\n");
+        }
+        else{
+            pc_textField.setText(PC_plus_one);
+            resultsTextArea.append("JCC:  Store PC +1 to PC" +"\r\n");
+        }
+    }
+    /**
+     * unconditional Jump to Address
+     *
+     */
+    public void jmaInstr(String instruction){
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+
+        pc_textField.setText(EA);
+        resultsTextArea.append("JMA:  Store EA to PC" +"\r\n");
+    }
+    /**
+     * something wrong
+     *
+     */
+    public void jsrInstr(String instruction){
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        String PC_plus_one=binary_plus_one(pc_textField.getText());
+
+        r3_textField.setText(PC_plus_one);
+        resultsTextArea.append("JSR:  Store PC+1 to R3" +"\r\n");
+        pc_textField.setText(EA);
+        resultsTextArea.append("JSR:  Store EA to PC" +"\r\n");
+
+        //R0 should contain pointer to arguments
+        //Argument list should end with –1 (all 1s) value
+    }
+    /**
+     * Return From Subroutine
+     *
+     */
+
+    public void rfsInstr(String instruction){
+        String immed  = instruction.substring(11, 16);
+        //change immed to 16 bits
+        DecimalFormat g1=new DecimalFormat("0000000000000000");
+        immed=g1.format(Integer.valueOf(immed));
+        r0_textField.setText(immed);
+        resultsTextArea.append("RFS:  Store immed to R0" +"\r\n");
+        pc_textField.setText(r3_textField.getText());
+        resultsTextArea.append("RFS:  Store R3 to PC" +"\r\n");
+    }
+    /**
+     * Subtract One and Branch
+     *
+     */
+
+    public void sobInstr(String instruction){
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        if (r == 0) {
+            String r_minus_one=binary_minus_one(r0_textField.getText());
+            r0_textField.setText(r_minus_one);
+            int r0=parseInt_for_all(r0_textField.getText());
+            resultsTextArea.append("SOB:  R0 = R0-1" +"\r\n");
+            if(r0>0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("SOB:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("SOB:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 1) {
+            String r_minus_one=binary_minus_one(r1_textField.getText());
+            r1_textField.setText(r_minus_one);
+            int r1=parseInt_for_all(r1_textField.getText());
+            resultsTextArea.append("SOB:  R1 = R1-1" +"\r\n");
+            if(r1>0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("SOB:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("SOB:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 2) {
+            String r_minus_one=binary_minus_one(r2_textField.getText());
+            r2_textField.setText(r_minus_one);
+            int r2=parseInt_for_all(r2_textField.getText());
+            resultsTextArea.append("SOB:  R2 = R2-1" +"\r\n");
+            if(r2>0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("SOB:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("SOB:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 3) {
+            String r_minus_one=binary_minus_one(r3_textField.getText());
+            r3_textField.setText(r_minus_one);
+            int r3=parseInt_for_all(r3_textField.getText());
+            resultsTextArea.append("SOB:  R3 = R3-1" +"\r\n");
+            if(r3>0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("SOB:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("SOB:  PC=PC+1" +"\r\n");
+            }
+        }
+
+    }
+    /**
+     * Jump Greater Than or Equal To
+     *
+     */
+
+    public void jgeInstr(String instruction){
+        int opcode = Integer.parseInt(instruction.substring(0, 6), 2);
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        int i = Integer.parseInt(instruction.substring(10, 11), 2);
+        int addr = Integer.parseInt(instruction.substring(11, 16), 2);
+        String EA=toBinary_lenth16(calculateEA(instruction));
+        if (r == 0) {
+            int r0=parseInt_for_all(r0_textField.getText());
+            if(r0>=0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JGE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JGE:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 1) {
+            int r1=parseInt_for_all(r1_textField.getText());
+            if(r1>=0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JGE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JGE:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 2) {
+            int r2=parseInt_for_all(r2_textField.getText());
+            if(r2>=0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("JGE:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("JGE:  PC=PC+1" +"\r\n");
+            }
+        }
+        else if (r == 3) {
+            int r3=parseInt_for_all(r3_textField.getText());
+            if(r3>=0){
+                pc_textField.setText(EA);
+                resultsTextArea.append("SOB:  Store EA to PC" +"\r\n");
+            }
+            else{
+                String PC_plus_one=binary_plus_one(pc_textField.getText());
+                pc_textField.setText(PC_plus_one);
+                resultsTextArea.append("SOB:  PC=PC+1" +"\r\n");
+            }
+        }
+    }
+    /**
+     * Add memory to Register
+     *
+     */
+
+    public void amrInstr(String instruction){
+        int opcode = Integer.parseInt(instruction.substring(0, 6), 2);
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        int i = Integer.parseInt(instruction.substring(10, 11), 2);
+        int addr = Integer.parseInt(instruction.substring(11, 16), 2);
+        int EA_int=calculateEA(instruction);
+
+        String c_ea=cacheSim.access_memory(EA_int,memory);
+
+        if(r==0){
+            r0_textField.setText(binary_add(c_ea,r0_textField.getText()));
+            resultsTextArea.append("AMR:  R0= R0+ Memory[EA]"+"\r\n");
+        }
+        else if(r==1){
+            r1_textField.setText(binary_add(c_ea,r1_textField.getText()));
+            resultsTextArea.append("AMR:  R1= R1+ Memory[EA]"+"\r\n");
+
+        }
+        else if(r==2){
+            r2_textField.setText(binary_add(c_ea,r2_textField.getText()));
+            resultsTextArea.append("AMR:  R2= R2+ Memory[EA]"+"\r\n");
+
+        }
+        else if(r==3){
+            r3_textField.setText(binary_add(c_ea,r3_textField.getText()));
+            resultsTextArea.append("AMR:  R3= R3+ Memory[EA]"+"\r\n");
+
+        }
+    }
+    /**
+     * Subtract Memory from register
+     *
+     */
+
+    public void smrInstr(String instruction){
+        int opcode = Integer.parseInt(instruction.substring(0, 6), 2);
+        int ix = Integer.parseInt(instruction.substring(8, 10), 2);
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        int i = Integer.parseInt(instruction.substring(10, 11), 2);
+        int addr = Integer.parseInt(instruction.substring(11, 16), 2);
+        int EA_int=calculateEA(instruction);
+
+
+
+        String c_ea=cacheSim.access_memory(EA_int,memory);
+
+        if(r==0){
+            r0_textField.setText(binary_minus(r0_textField.getText(),c_ea));
+            resultsTextArea.append("SMR:  R0= R0 - Memory[EA]"+"\r\n");
+        }
+        else if(r==1){
+            r1_textField.setText(binary_minus(r1_textField.getText(),c_ea));
+            resultsTextArea.append("SMR:  R1= R1 - Memory[EA]"+"\r\n");
+
+        }
+        else if(r==2){
+            r2_textField.setText(binary_minus(r2_textField.getText(),c_ea));
+            resultsTextArea.append("SMR:  R2= R2 - Memory[EA]"+"\r\n");
+
+        }
+        else if(r==3){
+            r3_textField.setText(binary_minus(r3_textField.getText(),c_ea));
+            resultsTextArea.append("SMR:  R3= R3 - Memory[EA]"+"\r\n");
+
+        }
+    }
+    /**
+     * Add  Immediate to Register
+     *
+     */
+    public void airInstr(String instruction){
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        String immed  = instruction.substring(11, 16);
+        //change immed to 16 bits
+
+        DecimalFormat g1=new DecimalFormat("0000000000000000");
+        immed=g1.format(Integer.valueOf(immed));
+        if(r==0){
+            r0_textField.setText(binary_add(immed,r0_textField.getText()));
+            resultsTextArea.append("AIR:  R0= R0+ Memory[EA]"+"\r\n");
+        }
+        else if(r==1){
+            r1_textField.setText(binary_add(immed,r1_textField.getText()));
+            resultsTextArea.append("AIR:  R1= R1+ Memory[EA]"+"\r\n");
+
+        }
+        else if(r==2){
+            r2_textField.setText(binary_add(immed,r2_textField.getText()));
+            resultsTextArea.append("AIR:  R2= R2+ Memory[EA]"+"\r\n");
+
+        }
+        else if(r==3){
+            r3_textField.setText(binary_add(immed,r3_textField.getText()));
+            resultsTextArea.append("AIR:  R3= R3+ Memory[EA]"+"\r\n");
+
+        }
+    }
+    /**
+     * Subtract  Immediate to Register
+     *
+     */
+    public void sirInstr(String instruction){
+        int r = Integer.parseInt(instruction.substring(6, 8), 2);
+        String immed  = instruction.substring(11, 16);
+        //change immed to 16 bits
+
+        DecimalFormat g1=new DecimalFormat("0000000000000000");
+        immed=g1.format(Integer.valueOf(immed));
+
+        if(r==0){
+            r0_textField.setText(binary_minus(r0_textField.getText(),immed));
+            resultsTextArea.append("SMR:  R0= R0 - Memory[EA]"+"\r\n");
+        }
+        else if(r==1){
+            r1_textField.setText(binary_minus(r1_textField.getText(),immed));
+            resultsTextArea.append("SMR:  R1= R1 - Memory[EA]"+"\r\n");
+
+        }
+        else if(r==2){
+            r2_textField.setText(binary_minus(r2_textField.getText(),immed));
+            resultsTextArea.append("SMR:  R2= R2 - Memory[EA]"+"\r\n");
+
+        }
+        else if(r==3){
+            r3_textField.setText(binary_minus(r3_textField.getText(),immed));
+            resultsTextArea.append("SMR:  R3= R3 - Memory[EA]"+"\r\n");
+
+        }
+    }
+
+
+
+    //===================================================================================================================
+    /**
+     * Multiply Register by Register
+     * overflow unset
+     */
+    public void mlt(String instruction) {   // instruction could be: MLT 0 2
+        int rx = Integer.parseInt(instruction.substring(8, 10), 2);
+        int ry = Integer.parseInt(instruction.substring(6, 8), 2);
+
+        if(rx==1||rx==3||ry==1||ry==3){
+           machinefault_illegal_instruction();
+        }
+        else {
+            String x_str;
+            String y_str;
+            if(rx==0){
+                x_str=r0_textField.getText();
+            }
+            else{
+                x_str=r2_textField.getText();
+            }
+            if(ry==0){
+                y_str=r0_textField.getText();
+            }
+            else{
+                y_str=r2_textField.getText();
+            }
+
+            int x= parseInt_for_all(x_str);
+            int y = parseInt_for_all(y_str);
+            //int x = r[rx];//whats in register rx
+            //int y = r[ry];
+            int res = x * y;
+            String result = toBinary_lenth16(res);
+
+            resultsTextArea.append("\nThe result of MLT is in registers");
+            if (rx == 0) {
+                r0_textField.setText(String.valueOf(result.substring(0, 8)));
+                r1_textField.setText(String.valueOf(result.substring(8, 16)));
+            }
+            else if (rx == 2) {
+                r2_textField.setText(String.valueOf(result.substring(0, 8)));
+                r3_textField.setText(String.valueOf(result.substring(8, 16)));
+            }
+        }
+    }
+
+    /**
+     *Divide Register by Register
+     * CC(3)
+     */
+    private void dvd(String instruction) {
+        int rx = Integer.parseInt(instruction.substring(6, 8),2);
+        int ry = Integer.parseInt(instruction.substring(8,10),2);
+        if(rx==1||rx==3||ry==1||ry==3){
+            machinefault_illegal_instruction();
+        }
+        else {
+            String x_str;
+            String y_str;
+            if(rx==0){
+                x_str=r0_textField.getText();
+            }
+            else{
+                x_str=r2_textField.getText();
+            }
+            if(ry==0){
+                y_str=r0_textField.getText();
+            }
+            else{
+                y_str=r2_textField.getText();
+            }
+            int x = parseInt_for_all(x_str);
+            int y = parseInt_for_all(y_str);
+            String result1 = "", result2 = "";
+            if (y == 0) {
+                cacheSim.write_to_memory(String.valueOf(1), 3, memory);
+                //cc[3]=1;
+                cc_textField.setText("1");
+            } else {
+                int res1 = x / y;
+                int res2 = x % y;
+                result1 = toBinary_lenth16(res1);
+                result2 = toBinary_lenth16(res2);
+            }
+            resultsTextArea.append("\nThe result of DVD is in registers");
+            if (rx == 0) {
+                r0_textField.setText(result1);
+                r1_textField.setText(result2);
+            }
+
+            if (rx == 2) {
+                r2_textField.setText(result1);
+                r3_textField.setText(result2);
+            }
+        }
+    }
+
+    private void trr(String instruction) {
+        int rx = Integer.parseInt(instruction.substring(6, 8),2);
+        int ry = Integer.parseInt(instruction.substring(8,10),2);
+        String x_str;
+        String y_str;
+        if(rx==0){
+            x_str=r0_textField.getText();
+        }
+        else if(rx==1){
+            x_str=r1_textField.getText();
+        }else if(rx==2){
+            x_str=r2_textField.getText();
+        }else{
+            x_str=r3_textField.getText();
+        }
+        if(ry==0){
+            y_str=r0_textField.getText();
+        } else if(ry==1){
+            y_str=r1_textField.getText();
+        }else if(ry==2){
+            y_str=r2_textField.getText();
+        } else{
+            y_str=r3_textField.getText();
+        }
+
+        int x = parseInt_for_all(x_str);
+        int y = parseInt_for_all(y_str);
+        resultsTextArea.append("\nTesting equality between R" + rx + " and R" + ry);
+        if (x == y) {
+            //cc[3]=1; ????????
+           // cacheSim.write_to_memory(Integer.toString(1), 3, memory);
+            cc_textField.setText("EQUAL");
+            resultsTextArea.append("\nRegisters are equal");
+        } else {
+            //cc[3]=0; ?????????
+           // cacheSim.write_to_memory(Integer.toString(0), 3, memory);
+            cc_textField.setText("NOT EQUAL");
+            resultsTextArea.append("\nRegisters are not equal");
+        }
+    }
+
+    private void and(String instruction) {
+        int rx = Integer.parseInt(instruction.substring(6, 8),2);
+        int ry = Integer.parseInt(instruction.substring(8,10),2);
+        resultsTextArea.append("\nAND operation between R" + rx + " and R" + ry);
+        resultsTextArea.append("\nResult is in R" + rx);
+        String x_str;
+        String y_str;
+        if(rx==0){
+            x_str=r0_textField.getText();
+        }
+        else if(rx==1){
+            x_str=r1_textField.getText();
+        }else if(rx==2){
+            x_str=r2_textField.getText();
+        }else{
+            x_str=r3_textField.getText();
+        }
+        if(ry==0){
+            y_str=r0_textField.getText();
+        } else if(ry==1){
+            y_str=r1_textField.getText();
+        }else if(ry==2){
+            y_str=r2_textField.getText();
+        } else{
+            y_str=r3_textField.getText();
+        }
+       // cacheSim.write_to_memory(Integer.toString(x & y), rx, memory);
+        StringBuilder strBuilder = new StringBuilder(x_str);
+        for(int i=0;i<=15;i++) {
+            if(x_str.charAt(i)==y_str.charAt(i)&&x_str.charAt(i)=='1') {
+                strBuilder.setCharAt(i, '1');
+            }
+            else{
+                strBuilder.setCharAt(i, '0');
+            }
+        }
+        x_str=strBuilder.toString();
+
+        if (rx == 0) {
+            r0_textField.setText(x_str);
+        } if(rx==1) {
+            r1_textField.setText(x_str);
+        } if(rx==2) {
+            r2_textField.setText(x_str);
+        } if(rx==3) {
+            r3_textField.setText(x_str);
+        }
+    }
+
+    private void orr(String instruction) {
+        int rx = Integer.parseInt(instruction.substring(6, 8),2);
+        int ry = Integer.parseInt(instruction.substring(8,10),2);
+        resultsTextArea.append("\nOR operation between R" + rx + " and R" + ry);
+        resultsTextArea.append("\nResult is in R"+rx);
+        String x_str;
+        String y_str;
+        if(rx==0){
+            x_str=r0_textField.getText();
+        }
+        else if(rx==1){
+            x_str=r1_textField.getText();
+        }else if(rx==2){
+            x_str=r2_textField.getText();
+        }else{
+            x_str=r3_textField.getText();
+        }
+        if(ry==0){
+            y_str=r0_textField.getText();
+        } else if(ry==1){
+            y_str=r1_textField.getText();
+        }else if(ry==2){
+            y_str=r2_textField.getText();
+        } else{
+            y_str=r3_textField.getText();
+        }
+        // cacheSim.write_to_memory(Integer.toString(x & y), rx, memory);
+        StringBuilder strBuilder = new StringBuilder(x_str);
+        for(int i=0;i<=15;i++) {
+            if(x_str.charAt(i)==y_str.charAt(i)&&x_str.charAt(i)=='0') {
+                strBuilder.setCharAt(i, '0');
+            }
+            else{
+                strBuilder.setCharAt(i, '1');
+            }
+        }
+        x_str=strBuilder.toString();
+
+        if (rx == 0) {
+            r0_textField.setText(x_str);
+        } if(rx==1) {
+            r1_textField.setText(x_str);
+        } if(rx==2) {
+            r2_textField.setText(x_str);
+        } if(rx==3) {
+            r3_textField.setText(x_str);
+        }
+
+    }
+
+    private void not(String instruction) {
+        int rx = Integer.parseInt(instruction.substring(6, 8),2);
+        resultsTextArea.append("\nNOT operation of R" + rx);
+        resultsTextArea.append("\nResult is in R" + rx);
+        String x_str;
+        if(rx==0){
+            x_str=r0_textField.getText();
+        }
+        else if(rx==1){
+            x_str=r1_textField.getText();
+        }else if(rx==2){
+            x_str=r2_textField.getText();
+        }else{
+            x_str=r3_textField.getText();
+        }
+        StringBuilder strBuilder = new StringBuilder(x_str);
+        for(int i=0;i<=15;i++) {
+            if(x_str.charAt(i)=='0') {
+                strBuilder.setCharAt(i, '1');
+            }
+            else{
+                strBuilder.setCharAt(i, '0');
+            }
+        }
+        x_str=strBuilder.toString();
+
+        if (rx == 0) {
+            r0_textField.setText(x_str);
+        } if(rx==1) {
+            r1_textField.setText(x_str);
+        } if(rx==2) {
+            r2_textField.setText(x_str);
+        } if(rx==3) {
+            r3_textField.setText(x_str);
+        }
+
+
+    }
+
+    //===================================================================================================================
+
+
     public void machinefault_opcode(){
         resultsTextArea.append("Machine fault: Illegal Operation Code\r\n");
         resultsTextArea.append("MFR set to 0100\r\n");
@@ -585,288 +1491,9 @@ public void ldaInstr(int r){
         resultsTextArea.append("Machine fault: Instruction is illegal \r\n");
     }
 
-    /**
-     * Return 16 bits binary string which value is a
-     * @param a
-     */
-    public String toBinary_lenth16(int a){
-        if(a>=0){
-            DecimalFormat g1=new DecimalFormat("0000000000000000");
-            return g1.format(Integer.valueOf(a));
-        }
-        else{
-            int minus_a =-a;
-            String true_form=Integer.toBinaryString(minus_a);
-            DecimalFormat g1=new DecimalFormat("0000000000000000");
-            String str=g1.format(Integer.valueOf(true_form));
-            StringBuilder strBuilder = new StringBuilder(str);
-            for(int i=0;i<16;i++) {
-                if(str.charAt(i)=='0') {
-                    strBuilder.setCharAt(i, '1');
-                }
-                else{
-                    strBuilder.setCharAt(i, '0');
-                }
-            }
-            String complement=strBuilder.toString();
-            int value_conmplement=Integer.parseInt(complement,2);
-            return Integer.toBinaryString(value_conmplement+1);
-        }
-    }
-    /**
-     * Return a's value, no matter a is negative or positive
-     * @param a
-     */
-    public int parseInt_for_all(String a){
-        //must 16 bits
-        if(a.charAt(15)==0){
-            return Integer.parseInt(a,2);
-        }
-        else{
-            int temp=Integer.parseInt(a,2);
-            a=Integer.toBinaryString(temp-1);
-            StringBuilder strBuilder1 = new StringBuilder(a);
-            for(int i=0;i<16;i++) {
-                if(a.charAt(i)=='0') {
-                    strBuilder1.setCharAt(i, '1');
-                }
-                else{
-                    strBuilder1.setCharAt(i, '0');
-                }
-            }
-            return -Integer.parseInt(strBuilder1.toString(),2);
-        }
-    }
 
 
-    /**
-     * String=String+1
-     */
-    public String binary_plus_one(String binary_string){
-        if (binary_string == ""||binary_string=="0"||binary_string=="0000000000000000") {
-            return "0000000000000001";
-        }
-        int decimal_data=parseInt_for_all(binary_string);
-        decimal_data=decimal_data+1;
 
-        return toBinary_lenth16(decimal_data);
-    }
-    /**
-     * String=String-1
-     */
-    public String binary_minus_one(String binary_string){
-        if (binary_string == ""||binary_string=="0"||binary_string=="0000000000000000") {
-            return "1111111111111111";
-        }
-        int decimal_data=parseInt_for_all(binary_string);
-        decimal_data=decimal_data-1;
-        return toBinary_lenth16(decimal_data);
-    }
-    /**
-     * return a+b
-     */
-    public String binary_add(String a, String b) {
-        int int_a=parseInt_for_all(a);
-        int int_b=parseInt_for_all(b);
-        int c=int_a+int_b;
-        return toBinary_lenth16(c);
-
-    }
-    /**
-     * return a+b
-     */
-    public String binary_minus(String a, String b){
-        int int_a=parseInt_for_all(a);
-        int int_b=parseInt_for_all(b);
-
-        int c=int_a-int_b;
-        return toBinary_lenth16(c);
-    }
-
-    public void airInstr(String instruction){
-        int r = Integer.parseInt(instruction.substring(6, 8), 2);
-        String immed  = instruction.substring(11, 16);
-        if(r==0){
-            r0_textField.setText(binary_add(immed,r0_textField.getText()));
-            resultsTextArea.append("AIR:  R0= R0+ Memory[EA]"+"\r\n");
-        }
-        else if(r==1){
-            r1_textField.setText(binary_add(immed,r1_textField.getText()));
-            resultsTextArea.append("AIR:  R1= R1+ Memory[EA]"+"\r\n");
-
-        }
-        else if(r==2){
-            r2_textField.setText(binary_add(immed,r2_textField.getText()));
-            resultsTextArea.append("AIR:  R2= R2+ Memory[EA]"+"\r\n");
-
-        }
-        else if(r==3){
-            r3_textField.setText(binary_add(immed,r3_textField.getText()));
-            resultsTextArea.append("AIR:  R3= R3+ Memory[EA]"+"\r\n");
-
-        }
-    }
-
-
-    //===================================================================================================================
-
-    public void mlt(String instruction) {   // instruction could be: MLT 0 2
-        String[] instr = instruction.split(" "); // {"MLT", "0", "2"}
-        int rx = Integer.valueOf(instr[1]);  //0
-        int ry = Integer.valueOf(instr[2]);  //2
-
-        int rx_bin = Integer.parseInt(instr[1], 2);
-        int ry_bin = Integer.parseInt(instr[2], 2);
-
-        String x_str = cacheSim.access_memory(rx, memory);
-        String y_str = cacheSim.access_memory(ry, memory);
-        int x = Integer.valueOf(x_str);
-        int y = Integer.valueOf(y_str);
-        //int x = r[rx];//whats in register rx
-        //int y = r[ry];
-        int res = x * y;
-        String result = Integer.toBinaryString(res);
-        while (result.length() < 16) {
-            result = '0' + result;
-        }
-        cacheSim.write_to_memory(String.valueOf(result.substring(0, 8)), rx, memory);
-        cacheSim.write_to_memory(String.valueOf(result.substring(8, 16)), rx+1, memory);
-        resultsTextArea.append("\nThe result of MLT is in registers");
-        if (rx == 0) {
-            r0_textField.setText(String.valueOf(result.substring(0, 8)));
-            r1_textField.setText(String.valueOf(result.substring(8, 16)));
-        } if(rx == 1) {
-            r1_textField.setText(String.valueOf(result.substring(0, 8)));
-            r2_textField.setText(String.valueOf(result.substring(8, 16)));
-        } if(rx == 2) {
-            r2_textField.setText(String.valueOf(result.substring(0, 8)));
-            r3_textField.setText(String.valueOf(result.substring(8, 16)));
-        }
-    }
-
-
-    private void dvd(String instruction) {
-        int rx = Integer.parseInt(instruction.substring(6, 8),2);
-        int ry = Integer.parseInt(instruction.substring(8,10),2);
-        String x_str = cacheSim.access_memory(rx, memory);
-        String y_str = cacheSim.access_memory(ry, memory);
-        int x = Integer.valueOf(x_str);
-        int y = Integer.valueOf(y_str);
-        String result1 = "", result2 = "";
-        if (y == 0) {
-            cacheSim.write_to_memory(String.valueOf(1), 3, memory);
-            //cc[3]=1;
-            cc_textField.setText("DVD ZERO");
-        } else {
-            int res1 = x/y;
-            int res2 = x%y;
-            result1 = Integer.toBinaryString(res1);
-            while (result1.length() < 16) {
-                result1 = '0' + result1;
-            }
-            result2 = Integer.toBinaryString(res2);
-            while (result2.length() < 16) {
-                result2 = '0' + result2;
-            }
-            cacheSim.write_to_memory(result1, rx, memory);
-            cacheSim.write_to_memory(result2, rx+1, memory);
-        }
-        resultsTextArea.append("\nThe result of DVD is in registers");
-        if(rx==0) {
-            r0_textField.setText(result1);
-            r1_textField.setText(result2);
-        } if(rx==1) {
-            r1_textField.setText(result1);
-            r2_textField.setText(result2);
-        } if(rx==2) {
-            r2_textField.setText(result1);
-            r3_textField.setText(result2);
-        }
-    }
-
-    private void trr(String instruction) {
-        String[] instr = instruction.split(" "); // {"TRR", "0", "2"}
-        int rx = Integer.valueOf(instr[1]);
-        int ry = Integer.valueOf(instr[2]);
-        String x_str = cacheSim.access_memory(rx, memory);
-        String y_str = cacheSim.access_memory(ry, memory);
-        int x = Integer.valueOf(x_str);
-        int y = Integer.valueOf(y_str);
-        resultsTextArea.append("\nTesting equality between R" + rx + " and R" + ry);
-        if (x == y) {
-            //cc[3]=1; ????????
-            cacheSim.write_to_memory(Integer.toString(1), 3, memory);
-            cc_textField.setText("EQUAL");
-            resultsTextArea.append("\nRegisters are equal");
-        } else {
-            //cc[3]=0; ?????????
-            cacheSim.write_to_memory(Integer.toString(0), 3, memory);
-            cc_textField.setText("NOT EQUAL");
-            resultsTextArea.append("\nRegisters are not equal");
-        }
-    }
-
-    private void and(String instruction) {
-        int rx = Integer.parseInt(instruction.substring(6, 8),2);
-        int ry = Integer.parseInt(instruction.substring(8,10),2);
-        resultsTextArea.append("\nAND operation between R" + rx + " and R" + ry);
-        resultsTextArea.append("\nResult is in R" + rx);
-        String x_str = cacheSim.access_memory(rx, memory);
-        String y_str = cacheSim.access_memory(ry, memory);
-        int x = Integer.valueOf(x_str);
-        int y = Integer.valueOf(y_str);
-        cacheSim.write_to_memory(Integer.toString(x & y), rx, memory);
-        if (rx == 0) {
-            r0_textField.setText(Integer.toString(x & y));
-        } if(rx==1) {
-            r1_textField.setText(Integer.toString(x & y));
-        } if(rx==2) {
-            r2_textField.setText(Integer.toString(x & y));
-        } if(rx==3) {
-            r3_textField.setText(Integer.toString(x & y));
-        }
-    }
-
-    private void orr(String instruction) {
-        int rx = Integer.parseInt(instruction.substring(6, 8),2);
-        int ry = Integer.parseInt(instruction.substring(8,10),2);
-        resultsTextArea.append("\nOR operation between R" + rx + " and R" + ry);
-        resultsTextArea.append("\nResult is in R"+rx);
-        String x_str = cacheSim.access_memory(rx, memory);
-        String y_str = cacheSim.access_memory(ry, memory);
-        int x = Integer.valueOf(x_str);
-        int y = Integer.valueOf(y_str);
-        cacheSim.write_to_memory(Integer.toString(x | y), rx, memory);
-        if (rx == 0) {
-            r0_textField.setText(Integer.toString(x | y));
-        } if (rx == 1) {
-            r1_textField.setText(Integer.toString(x | y));
-        } if (rx == 2) {
-            r2_textField.setText(Integer.toString(x | y));
-        } if (rx == 3) {
-            r3_textField.setText(Integer.toString(x | y));
-        }
-    }
-
-    private void not(String instruction) {
-        int rx = Integer.parseInt(instruction.substring(6, 8),2);
-        resultsTextArea.append("\nNOT operation of R" + rx);
-        resultsTextArea.append("\nResult is in R" + rx);
-        String x_str = cacheSim.access_memory(rx, memory);
-        int x = Integer.valueOf(x_str);
-        cacheSim.write_to_memory(Integer.toString(~x), rx, memory);
-        if (rx == 0) {
-            r0_textField.setText(Integer.toString(~x));
-        } if (rx == 1) {
-            r1_textField.setText(Integer.toString(~x));
-        } if (rx == 2) {
-            r2_textField.setText(Integer.toString(~x));
-        } if (rx == 3) {
-            r3_textField.setText(Integer.toString(~x));
-        }
-    }
-
-    //===================================================================================================================
 
 
     public static void main(String[] args) {
@@ -875,8 +1502,6 @@ public void ldaInstr(int r){
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-
-
     }
 }
 
